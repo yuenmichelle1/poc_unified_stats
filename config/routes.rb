@@ -3,5 +3,9 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "articles#index"
-  # resources 
+  resource :classification_event, only: [:create, :update]
+  resource :comment, only: [:create, :update]
+  
+
+  post '/counts/classifications', action: :query, controller: 'classification_count'
 end
