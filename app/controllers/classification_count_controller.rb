@@ -15,13 +15,11 @@ class ClassificationCountController < ApplicationController
             where_clause += ' and ' if start_date && end_date
             where_clause += "year < '#{end_date}'" if end_date
             classification_count = if start_date || end_date
-                ClassificationYearlyCount.where(where_clause)
+                ClassificationYearlyCount.select('year AS period, yearly_classification_count AS count').where(where_clause)
             else
-                ClassificationYearlyCount.all
+                ClassificationYearlyCount.select('year AS period, yearly_classification_count AS count').all
             end
         end
-
-        puts classification_count
 
         render json: {
             message: classification_count

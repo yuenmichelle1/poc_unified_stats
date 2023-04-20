@@ -3,10 +3,7 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "articles#index"
-  # resource :classification_event, only: [:create, :update]
-  # resource :comment, only: [:create, :update]
   post 'kinesis', to: 'kinesis#create'
   
-
   post '/counts/classifications', action: :query, controller: 'classification_count'
 end
