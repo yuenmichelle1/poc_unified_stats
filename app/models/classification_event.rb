@@ -1,4 +1,8 @@
 class ClassificationEvent < ApplicationRecord
+    self.primary_keys = :classification_id, :event_time
+    validates :classification_id, presence: true 
+    validates :event_time, presence: true
+
     scope :last_year, -> { where('event_time > ?', 1.year.ago) }
     scope :last_month, -> { where('event_time > ?', 1.month.ago) }
     scope :last_week, -> { where('event_time > ?', 1.week.ago) }
