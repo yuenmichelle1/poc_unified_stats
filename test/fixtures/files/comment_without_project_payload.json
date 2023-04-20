@@ -1,0 +1,25 @@
+{
+    "payload": [
+        {
+            "source": "talk",
+            "type": "comment",
+            "version": "1.0.0",
+            "timestamp": "2023-04-20T16:24:02Z",
+            "data": {
+                "id": 1819,
+                "board_id": 38,
+                "discussion_id": 338,
+                "focus_id": null,
+                "focus_type": null,
+                "project_id": null,
+                "section": "zooniverse",
+                "body": "test",
+                "user_id": "1326056",
+                "user_ip": "12.157.174.6",
+                "created_at": "2023-04-20T16:24:02.068Z",
+                "url": "https://pfe-preview.zooniverse.org/talk/38/338?comment=1819"
+            },
+            "linked": {}
+        }
+    ]
+}
