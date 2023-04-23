@@ -11,6 +11,8 @@ capybara-*.html
 rerun.txt
 pickle-email-*.html
 
+/sample_data/sample_panoptes_classifications.csv
+
 # Ignore all logfiles and tempfiles.
 /log/*
 /tmp/*

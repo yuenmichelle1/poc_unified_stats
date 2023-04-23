@@ -1,6 +1,7 @@
 class ClassificationCountController < ApplicationController
     def query
-        interval = params[:interval] || 'year'
+        interval = params[:interval] # if not given then return the count 
+        # if given then bucket by. 
         start_date = params[:start_date]
         end_date = params[:end_date]
         #user_id = []
@@ -20,6 +21,15 @@ class ClassificationCountController < ApplicationController
                 ClassificationYearlyCount.select('year AS period, yearly_classification_count AS count').all
             end
         end
+
+        #example query 
+        # ClassificationEvent.select(
+        #     "time_bucket('#{time_bucket}', event_time) AS period, count(*)"
+        #     )
+        #     .group("period")
+        #     .where(**query_filters)
+        #     .where("event_time >= NOW() - INTERVAL ?", window)
+        #
 
         render json: {
             message: classification_count

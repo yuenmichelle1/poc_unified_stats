@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_19_194046) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_23_195141) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "timescaledb"
@@ -18,15 +18,42 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_19_194046) do
   create_table "classification_events", id: false, force: :cascade do |t|
     t.bigint "classification_id"
     t.datetime "event_time", precision: nil, null: false
-    t.datetime "event_created_at", precision: nil
+    t.bigint "project_id"
+    t.bigint "workflow_id"
+    t.bigint "user_id"
+    t.float "session_time"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_group_ids", array: true
+    t.index ["event_time"], name: "classification_events_event_time_idx", order: :desc
+  end
+
+  create_table "classifications", id: false, force: :cascade do |t|
+    t.bigint "id"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil
+    t.datetime "started_at", precision: nil
+    t.datetime "finished_at", precision: nil
+    t.bigint "project_id"
+    t.bigint "workflow_id"
+    t.bigint "user_id"
+    t.bigint "user_group_id", default: [], array: true
+    t.float "session_time"
+    t.index ["created_at"], name: "classifications_created_at_idx", order: :desc
+  end
+
+  create_table "classifications_with_dupes", id: false, force: :cascade do |t|
+    t.bigint "id"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil
+    t.datetime "started_at", precision: nil
+    t.datetime "finished_at", precision: nil
     t.bigint "project_id"
     t.bigint "workflow_id"
     t.bigint "user_id"
     t.bigint "user_group_id"
     t.float "session_time"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["event_time"], name: "classification_events_event_time_idx", order: :desc
+    t.index ["created_at"], name: "classifications_with_dupes_created_at_idx", order: :desc
   end
 
   create_table "comments", id: false, force: :cascade do |t|
@@ -160,20 +187,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_19_194046) do
     WHERE (classification_events.event_time >= COALESCE(_timescaledb_internal.to_timestamp_without_timezone(_timescaledb_internal.cagg_watermark(17)), '-infinity'::timestamp without time zone))
     GROUP BY (time_bucket('P1D'::interval, classification_events.event_time)), classification_events.workflow_id;
   SQL
-  create_view "classification_daily_by_group_id", sql_definition: <<-SQL
-      SELECT _materialized_hypertable_18.day,
-      _materialized_hypertable_18.user_group_id,
-      _materialized_hypertable_18.classification_count
-     FROM _timescaledb_internal._materialized_hypertable_18
-    WHERE (_materialized_hypertable_18.day < COALESCE(_timescaledb_internal.to_timestamp_without_timezone(_timescaledb_internal.cagg_watermark(18)), '-infinity'::timestamp without time zone))
-  UNION ALL
-   SELECT time_bucket('P1D'::interval, classification_events.event_time) AS day,
-      classification_events.user_group_id,
-      count(*) AS classification_count
-     FROM classification_events
-    WHERE (classification_events.event_time >= COALESCE(_timescaledb_internal.to_timestamp_without_timezone(_timescaledb_internal.cagg_watermark(18)), '-infinity'::timestamp without time zone))
-    GROUP BY (time_bucket('P1D'::interval, classification_events.event_time)), classification_events.user_group_id;
-  SQL
   create_view "average_session_time_again", materialized: true, sql_definition: <<-SQL
       SELECT srt.workflow_id,
       avg(srt.session_time) AS avg_classification_time
@@ -196,5 +209,21 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_19_194046) do
      FROM classification_events srt
     WHERE ((srt.session_time > (0)::double precision) AND (srt.session_time < (60)::double precision))
     GROUP BY srt.workflow_id, srt.project_id;
+  SQL
+  create_view "classifications_daily_by_user_id", sql_definition: <<-SQL
+      SELECT _materialized_hypertable_19.day,
+      _materialized_hypertable_19.count,
+      _materialized_hypertable_19.user_id,
+      _materialized_hypertable_19.user_group_ids
+     FROM _timescaledb_internal._materialized_hypertable_19
+    WHERE (_materialized_hypertable_19.day < COALESCE(_timescaledb_internal.to_timestamp_without_timezone(_timescaledb_internal.cagg_watermark(19)), '-infinity'::timestamp without time zone))
+  UNION ALL
+   SELECT time_bucket('P1D'::interval, classification_events.event_time) AS day,
+      count(*) AS count,
+      classification_events.user_id,
+      classification_events.user_group_ids
+     FROM classification_events
+    WHERE (classification_events.event_time >= COALESCE(_timescaledb_internal.to_timestamp_without_timezone(_timescaledb_internal.cagg_watermark(19)), '-infinity'::timestamp without time zone))
+    GROUP BY (time_bucket('P1D'::interval, classification_events.event_time)), classification_events.user_id, classification_events.user_group_ids;
   SQL
 end
