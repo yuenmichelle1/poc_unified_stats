@@ -1,8 +1,9 @@
-class ClassificationDailyByWorkflow < ApplicationRecord
-    self.table_name = 'classification_daily_by_workflow'
-    attribute :classification_count, :integer
+# frozen_string_literal: true
 
-    def readonly?
-        true
-    end
+class ClassificationDailyByWorkflow < ApplicationRecord
+  self.table_name = 'classification_count_daily_per_workflow'
+
+  def readonly?
+    true
+  end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class AddContinuousAggregatePolicyForDailyClassifications < ActiveRecord::Migration[7.0]
+class CreateContinuousAggregatePolicy < ActiveRecord::Migration[7.0]
   disable_ddl_transaction!
   def change
     execute <<~SQL

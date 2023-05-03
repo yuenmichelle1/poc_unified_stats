@@ -1,8 +1,10 @@
-class ClassificationDailyByProject < ApplicationRecord
-    self.table_name = 'classification_daily_by_project'
-    attribute :classification_count, :integer
+# frozen_string_literal: true
 
-    def readonly?
-        true
-    end
+class ClassificationDailyByProject < ApplicationRecord
+  self.table_name = 'classification_count_daily_per_project'
+  attribute :classification_count, :integer
+
+  def readonly?
+    true
+  end
 end
