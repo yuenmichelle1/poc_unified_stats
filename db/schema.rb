@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_05_04_001454) do
+ActiveRecord::Schema[7.0].define(version: 2023_05_04_145642) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "timescaledb"
@@ -161,5 +161,36 @@ ActiveRecord::Schema[7.0].define(version: 2023_05_04_001454) do
      FROM classification_user_groups
     WHERE (classification_user_groups.created_at >= COALESCE(_timescaledb_internal.to_timestamp_without_timezone(_timescaledb_internal.cagg_watermark(18)), '-infinity'::timestamp without time zone))
     GROUP BY (time_bucket('P1D'::interval, classification_user_groups.created_at)), classification_user_groups.user_group_id, classification_user_groups.project_id;
+  SQL
+  create_view "total_classifications_by_user_group_id_per_project", materialized: true, sql_definition: <<-SQL
+      SELECT sum(classification_daily_by_user_group_by_project.classification_count) AS sum,
+      classification_daily_by_user_group_by_project.user_group_id,
+      classification_daily_by_user_group_by_project.project_id
+     FROM classification_daily_by_user_group_by_project
+    GROUP BY classification_daily_by_user_group_by_project.user_group_id, classification_daily_by_user_group_by_project.project_id;
+  SQL
+  create_view "classifications_daily_by_group_per_user", sql_definition: <<-SQL
+      SELECT _materialized_hypertable_19.period,
+      _materialized_hypertable_19.user_group_id,
+      _materialized_hypertable_19.user_id,
+      _materialized_hypertable_19.count
+     FROM _timescaledb_internal._materialized_hypertable_19
+    WHERE (_materialized_hypertable_19.period < COALESCE(_timescaledb_internal.to_timestamp_without_timezone(_timescaledb_internal.cagg_watermark(19)), '-infinity'::timestamp without time zone))
+  UNION ALL
+   SELECT time_bucket('P1D'::interval, classification_user_groups.created_at) AS period,
+      classification_user_groups.user_group_id,
+      classification_user_groups.user_id,
+      count(*) AS count
+     FROM classification_user_groups
+    WHERE (classification_user_groups.created_at >= COALESCE(_timescaledb_internal.to_timestamp_without_timezone(_timescaledb_internal.cagg_watermark(19)), '-infinity'::timestamp without time zone))
+    GROUP BY (time_bucket('P1D'::interval, classification_user_groups.created_at)), classification_user_groups.user_group_id, classification_user_groups.user_id;
+  SQL
+  create_view "avg_workflow_session_time", materialized: true, sql_definition: <<-SQL
+      SELECT srt.workflow_id,
+      srt.project_id,
+      avg(srt.session_time) AS avg_classification_time
+     FROM classifications srt
+    WHERE ((srt.session_time > (0)::double precision) AND (srt.session_time < (4500)::double precision))
+    GROUP BY srt.workflow_id, srt.project_id;
   SQL
 end
