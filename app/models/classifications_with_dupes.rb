@@ -2,7 +2,7 @@
 
 # frozen_string_literal: true
 
-class ClassificationsWithDupe < ApplicationRecord
+class ClassificationsWithDupes < ApplicationRecord
     self.table_name = 'classifications_with_dupes'
   
     def readonly?
