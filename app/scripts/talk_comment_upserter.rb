@@ -4,7 +4,7 @@ require 'csv'
 require 'json'
 require '../../config/environment'
 
-# used to upsert classification events coming from panoptes (not kinesis stream)
+# used to upsert classification events coming from talk (not kinesis stream)
 class TalkCommentUpserter
   def comment_event(comment)
     {
