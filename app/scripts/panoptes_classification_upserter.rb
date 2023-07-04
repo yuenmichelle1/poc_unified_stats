@@ -11,34 +11,39 @@ class PanoptesClassificationUpserter
     classification_events = Set.new
     classifications.each { |classification| classification_events.add(classification_event(classification)) }
     # Feature of Rails 6+, instead of using activerecord-import can use Rails' bulk upsert methods
-    Classification.upsert_all(classification_events.to_a, nil, false)
+    ClassificationEvent.upsert_all(classification_events.to_a, nil, false)
   end
 
   def classification_event(classification)
     {
       classification_id: classification['id'],
-      created_at: DateTime.parse(classification['created_at']),
-      updated_at: DateTime.parse(classification['updated_at']),
+      event_time: DateTime.parse(classification['created_at']),
+      classification_updated_at: DateTime.parse(classification['updated_at']),
       started_at: started_at(JSON.parse(classification['metadata'])),
       finished_at: finished_at(JSON.parse(classification['metadata'])),
       project_id: classification['project_id'],
       workflow_id: classification['workflow_id'],
       user_id: classification['user_id'],
-      session_time: session_time(JSON.parse(classification['metadata']))
+      session_time: session_time(JSON.parse(classification['metadata'])),
+      user_group_ids: user_group_ids(JSON.parse(classification['metadata']))
     }
   end
 
+  def user_group_ids(metadata)
+    metadata.fetch('user_group_ids', [])
+  end
+
   def started_at(metadata)
-    DateTime.parse(metadata['started_at'])
+    Time.parse(metadata['started_at'])
   end
 
   def finished_at(metadata)
-    DateTime.parse(metadata['finished_at'])
+    Time.parse(metadata['finished_at'])
   end
 
   def session_time(metadata)
-    finished_at = DateTime.parse(metadata['finished_at'])
-    started_at =  DateTime.parse(metadata['started_at'])
+    finished_at = Time.parse(metadata['finished_at'])
+    started_at =  Time.parse(metadata['started_at'])
     diff = finished_at.to_i - started_at.to_i
     diff.to_f
   end
@@ -56,14 +61,12 @@ rescue Exception => e
 end
 
 begin
-  Classification.import!(
-    classification_events.to_a,
-    on_duplicate_key_update: {
-      conflict_target: %i[classification_id created_at],
-      columns: %i[project_id workflow_id user_id user_group_ids started_at finished_at session_time]
-    },
-    batch_size: 1000
-  )
-rescue Exception => e
+  classification_events.to_a.each_slice(1000) do |batch|
+    ClassificationEvent.upsert_all(
+      batch,
+      unique_by: %i[classification_id event_time]
+    )
+  end
+rescue StandardError => e
   puts "MDY114 UPSERT ERROR #{e}"
 end
